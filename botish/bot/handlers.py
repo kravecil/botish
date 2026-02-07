@@ -73,7 +73,6 @@ async def callback_settings_changed(call: CallbackQuery) -> None:
 
         match setting_key:
             case "period_up":
-                user = await User.get(call.message.chat.id)
                 await user.update_period_up(int(setting_value))
 
                 await call.message.answer(
@@ -81,7 +80,6 @@ async def callback_settings_changed(call: CallbackQuery) -> None:
                     reply_markup=settings_kb(),
                 )
             case "period_down":
-                user = await User.get(call.message.chat.id)
                 await user.update_period_down(int(setting_value))
 
                 await call.message.answer(
