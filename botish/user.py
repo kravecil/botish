@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from botish.db.mongo import db
+from botish.bot.texts import PERIODS
 
 
 class OpenInterestSettings(BaseModel):
@@ -9,6 +10,14 @@ class OpenInterestSettings(BaseModel):
 
     period_down: int = 5
     percent_down: int = 5
+
+    @property
+    def period_up_h(self) -> str:
+        return next(iter(k for k, v in PERIODS.items() if v == self.period_up), "")
+
+    @property
+    def period_down_h(self) -> str:
+        return next(iter(k for k, v in PERIODS.items() if v == self.period_down), "")
 
 
 class UserSettings(BaseModel):

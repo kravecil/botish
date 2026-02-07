@@ -3,12 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from botish.bot.keyboards import period_down_kb, period_up_kb, settings_kb, start_kb
-from botish.bot.texts import (
-    CLBK_SETTINGS_CHANGED,
-    PERIODS,
-    TXT_SETTINGS_NULL,
-    ButtonCaption,
-)
+from botish.bot.texts import CLBK_SETTINGS_CHANGED, PERIODS, ButtonCaption
 from botish.user import User
 
 router = Router()
@@ -37,12 +32,12 @@ async def command_settings_handler(message: Message) -> None:
 
     reply_text = (
         "📈<b>Рост</b>\n"
-        f"период {settings.open_interest.period_up or TXT_SETTINGS_NULL}\n"
-        f"процент {settings.open_interest.percent_up or TXT_SETTINGS_NULL}\n"
+        f"период: {settings.open_interest.period_up_h}\n"
+        f"процент: {settings.open_interest.percent_up}\n"
         "\n"
         "📉<b>Просадка</b>\n"
-        f"период {settings.open_interest.period_down or TXT_SETTINGS_NULL}\n"
-        f"процент {settings.open_interest.percent_down or TXT_SETTINGS_NULL}\n"
+        f"период: {settings.open_interest.period_down_h}\n"
+        f"процент: {settings.open_interest.percent_down}\n"
     )
 
     await message.answer(
