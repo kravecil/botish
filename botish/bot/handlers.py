@@ -2,12 +2,12 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, Message
 
-from botish.bot.keyboards import period_up_kb, settings_kb, start_kb
+from botish.bot.keyboards import period_down_kb, period_up_kb, settings_kb, start_kb
 from botish.bot.texts import (
     CLBK_SETTINGS_CHANGED,
+    PERIODS,
     TXT_SETTINGS_NULL,
     ButtonCaption,
-    PERIODS,
 )
 from botish.user import User
 
@@ -59,6 +59,13 @@ async def command_back_to_settings_handler(message: Message) -> None:
 async def command_period_up_handler(message: Message) -> None:
     await message.answer(
         "Выберите период роста (в минутах):", reply_markup=period_up_kb()
+    )
+
+
+@router.message(F.text == ButtonCaption.period_down)
+async def command_period_down_handler(message: Message) -> None:
+    await message.answer(
+        "Выберите период просадки (в минутах):", reply_markup=period_down_kb()
     )
 
 
