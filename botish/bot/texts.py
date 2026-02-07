@@ -2,12 +2,14 @@ from enum import StrEnum
 
 
 class ButtonCaption(StrEnum):
-    settings = "⚙️ Настройки"
+    settings = "⚙️ Настройки"  # TODO @me: переместить отсюда
 
     period_up = "Период роста"
     period_down = "Период просадки"
     percent_up = "Процент роста"
     percent_down = "Процент просадки"
+
+    back_to_settings = "⬅️ Назад"
 
 
 TXT_SETTINGS_NULL = "[не выбрано]"

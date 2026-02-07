@@ -35,6 +35,9 @@ def settings_kb() -> ReplyKeyboardMarkup:
             KeyboardButton(text=ButtonCaption.percent_up),
             KeyboardButton(text=ButtonCaption.percent_down),
         ],
+        [
+            KeyboardButton(text=ButtonCaption.back_to_settings),
+        ],
     ]
 
     return ReplyKeyboardMarkup(
