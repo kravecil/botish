@@ -3,7 +3,12 @@ from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from botish.bot.keyboards import period_up_kb, settings_kb, start_kb
-from botish.bot.texts import CLBK_SETTINGS_CHANGED, TXT_SETTINGS_NULL, ButtonCaption
+from botish.bot.texts import (
+    CLBK_SETTINGS_CHANGED,
+    TXT_SETTINGS_NULL,
+    ButtonCaption,
+    PERIODS,
+)
 from botish.user import User
 
 router = Router()
@@ -68,10 +73,11 @@ async def callback_settings_changed(call: CallbackQuery) -> None:
         user = await User.get(call.message.chat.id)
 
         data = call.data.replace(f"{CLBK_SETTINGS_CHANGED}:", "").split(":")
-        setting_key = data[0]
-        setting_value = data[1]
+        event = data[0]
+        setting_key = data[1]
+        setting_value = PERIODS[data[1]]
 
-        match setting_key:
+        match event:
             case "period_up":
                 await user.update_period_up(int(setting_value))
 

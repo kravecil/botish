@@ -51,10 +51,10 @@ def period_up_kb() -> InlineKeyboardMarkup:
     buttons = [
         [
             InlineKeyboardButton(
-                text=key,
-                callback_data=f"{CLBK_SETTINGS_CHANGED}:{SettingsCallback.period_up}:{value}",
+                text=p,
+                callback_data=f"{CLBK_SETTINGS_CHANGED}:{SettingsCallback.period_up}:{p}",
             )
-            for key, value in PERIODS.items()
+            for p in PERIODS
         ],
     ]
 
@@ -67,10 +67,10 @@ def period_down_kb() -> InlineKeyboardMarkup:
     buttons = [
         [
             InlineKeyboardButton(
-                text=key,
-                callback_data=f"{CLBK_SETTINGS_CHANGED}:{SettingsCallback.period_down}:{value}",
+                text=p,
+                callback_data=f"{CLBK_SETTINGS_CHANGED}:{SettingsCallback.period_down}:{p}",
             )
-            for key, value in PERIODS.items()
+            for p in PERIODS
         ],
     ]
 
