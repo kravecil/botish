@@ -4,11 +4,11 @@ from botish.db.mongo import db
 
 
 class OpenInterestSettings(BaseModel):
-    period_up: int | None = None
-    percent_up: float | None = None
+    period_up: int = 60
+    percent_up: int = 60
 
-    period_down: int | None = None
-    percent_down: float | None = None
+    period_down: int = 5
+    percent_down: int = 5
 
 
 class UserSettings(BaseModel):

@@ -47,7 +47,7 @@ async def command_settings_handler(message: Message) -> None:
 
 @router.message(F.text == ButtonCaption.back_to_settings)
 async def command_back_to_settings_handler(message: Message) -> None:
-    await message.answer("Вы вернулись", reply_markup=start_kb())
+    await message.answer("Выберите команду", reply_markup=start_kb())
 
 
 @router.message(F.text == ButtonCaption.period_up)
