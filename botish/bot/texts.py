@@ -1,9 +1,7 @@
 from enum import StrEnum
 
 
-class Texts(StrEnum):
-    settings_null = "[не выбрано]"
-
+class ButtonCaption(StrEnum):
     settings = "⚙️ Настройки"
 
     period_up = "Период роста"
@@ -11,6 +9,8 @@ class Texts(StrEnum):
     percent_up = "Процент роста"
     percent_down = "Процент просадки"
 
+
+TXT_SETTINGS_NULL = "[не выбрано]"
 
 PERIODS = {
     "1": 1,
@@ -23,4 +23,11 @@ PERIODS = {
     "24ч": 1440,
 }
 
-CBK_DATA_PERIOD_UP = "period_up:"
+CLBK_SETTINGS_CHANGED = "settings_changed"
+
+
+class SettingsCallback(StrEnum):
+    period_up = "period_up"
+    period_down = "period_down"
+    percent_up = "percent_up"
+    percent_down = "percent_down"

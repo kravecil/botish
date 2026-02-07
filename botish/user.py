@@ -48,8 +48,20 @@ class User(BaseModel):
 
         return User(**user_db)
 
-    async def update_period_up(self, value: int) -> None:
+    async def update_settings(self, name: str, value: int | float) -> None:
         await db.users.update_one(
             filter={"chat_id": self.chat_id},
-            update={"$set": {"settings.open_interest.period_up": value}},
+            update={"$set": {name: value}},
         )
+
+    async def update_period_up(self, value: int) -> None:
+        await self.update_settings("settings.open_interest.period_up", value)
+
+    async def update_period_down(self, value: int) -> None:
+        await self.update_settings("settings.open_interest.period_down", value)
+
+    async def update_percent_up(self, value: float) -> None:
+        await self.update_settings("settings.open_interest.percent_up", value)
+
+    async def update_percent_down(self, value: float) -> None:
+        await self.update_settings("settings.open_interest.percent_down", value)
