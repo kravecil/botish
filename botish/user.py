@@ -52,6 +52,12 @@ class User(BaseModel):
         return user
 
     @staticmethod
+    async def all() -> list[User]:
+        db_users = db.users.find()
+
+        return [User(**user) async for user in db_users]
+
+    @staticmethod
     async def get(chat_id: int) -> "User":
         user_db = await db.users.find_one({"chat_id": chat_id})
 

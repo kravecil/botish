@@ -1,10 +1,10 @@
 import asyncio
 
-from botish.tasks.tasks import gather_open_interest
+from botish.tasks.tasks import check_periods
 
 
 async def main():
-    await gather_open_interest()
+    await check_periods()
     pass
 
 
