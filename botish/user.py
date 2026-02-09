@@ -51,6 +51,11 @@ class User(BaseModel):
 
         return user
 
+    # async def save(self) -> None:
+    #     await db.users.update_one(
+    #         {"chat_id": self.chat_id}, {"$set": {**self.model_dump()}}, upsert=True
+        # )
+
     @staticmethod
     async def all() -> list[User]:
         db_users = db.users.find()
