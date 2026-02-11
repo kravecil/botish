@@ -6,9 +6,9 @@ from botish.bot.texts import PERIODS
 
 class OpenInterestSettings(BaseModel):
     period_up: int = 60
-    percent_up: int = 60
+    percent_up: int = 5
 
-    period_down: int = 5
+    period_down: int = 60
     percent_down: int = 5
 
     @property
@@ -54,7 +54,7 @@ class User(BaseModel):
     # async def save(self) -> None:
     #     await db.users.update_one(
     #         {"chat_id": self.chat_id}, {"$set": {**self.model_dump()}}, upsert=True
-        # )
+    # )
 
     @staticmethod
     async def all() -> list[User]:
@@ -85,3 +85,9 @@ class User(BaseModel):
 
     async def update_percent_down(self, value: float) -> None:
         await self.update_settings("settings.open_interest.percent_down", value)
+
+    @staticmethod
+    async def get_with_period(key: str, value: int) -> list[User]:
+        db_users = db.users.find({f"settings.open_interest.{key}": value})
+
+        return [User(**u) async for u in db_users]

@@ -41,9 +41,7 @@ class BinanceAdapter(IAdapter):
 
         return symbols
 
-    async def get_open_interests(self) -> list[OpenInterest]:
-        symbols = await self.get_all_symbols()
-
+    async def get_open_interests(self, symbols: list[str]) -> list[OpenInterest]:
         url = HttpUrl(f"{FAPI_URL}/fapi/v1/openInterest")
 
         tasks = []

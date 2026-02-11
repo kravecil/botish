@@ -20,5 +20,9 @@ class MongoDatabase:
     def users(self):
         return self.db["users"]
 
+    @property
+    def exchanges(self):
+        return self.db["exchanges"]
+
 
 db = MongoDatabase(settings.db_dsn.encoded_string())

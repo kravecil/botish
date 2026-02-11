@@ -9,7 +9,7 @@ from botish.db.mongo import db
 
 fake = Faker("ru_RU")
 
-COUNT = 5
+COUNT = 2
 
 
 async def main() -> None:
