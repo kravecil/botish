@@ -5,10 +5,10 @@ from botish.bot.texts import PERIODS
 
 
 class OpenInterestSettings(BaseModel):
-    period_up: int = 60
+    period_up: int = 1
     percent_up: int = 5
 
-    period_down: int = 60
+    period_down: int = 1
     percent_down: int = 5
 
     @property
