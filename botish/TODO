@@ -5,3 +5,7 @@
 - в рассылке уведомлений также прдусмотреть повторное пересылание сообщения если бан по таймауту
 - добавить индексы в БД
 - проверка, что пользователь зарегистрирован (в middleware)
+- установить для коллекции open_interest у документов expireOnSeconds
+- добавить в документы created_at updated_at
+- mongodb: Soft rlimits for open file descriptors too low
+- mongodb: либо запоролить либо закрыть expose port, либо поменять порт

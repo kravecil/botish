@@ -1,0 +1,49 @@
+services:
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+  mongo:
+    image: mongo
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: botishusr
+      MONGO_INITDB_ROOT_PASSWORD: V!jh678RRt!_!!
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - mongo
+    env_file:
+      - .env
+    volumes:
+      - .:/app:cached
+    command: poetry run python botish/main.py
+  worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - mongo
+      - app
+    env_file:
+      - .env
+    volumes:
+      - .:/app:cached
+    command: poetry run taskiq worker botish.tasks.broker:broker botish.tasks.tasks
+  scheduler:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - mongo
+      - app
+      - worker
+    env_file:
+      - .env
+    volumes:
+      - .:/app:cached
+    command: poetry run taskiq scheduler botish.tasks.scheduler:scheduler botish.tasks.tasks
