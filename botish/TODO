@@ -9,3 +9,5 @@
 - добавить в документы created_at updated_at
 - mongodb: Soft rlimits for open file descriptors too low
 - mongodb: либо запоролить либо закрыть expose port, либо поменять порт
+- запись в базу происходит не моментально, поэтому сравнение с датой неточное
+# - сразу закрывать соединение с бд в тасках

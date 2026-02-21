@@ -3,7 +3,7 @@ import asyncio
 from botish.bot.bot import send_s
 from botish.bot.texts import PERIODS
 from botish.calc.open_interest import calc_open_interest, CalcOpenInterestResult
-from botish.db.mongo import db
+from botish.db.mongo import get_db
 from botish.finance.adapters.binance import BinanceAdapter
 from botish.tasks.broker import broker
 from botish.user import User
@@ -16,10 +16,13 @@ async def gather_open_interest() -> None:
     binance_symbols = await binance.get_all_symbols()
     binance_open_interests = await binance.get_open_interests(binance_symbols)
 
-    await db.exchanges.update_one(
-        {"name": "binance"}, {"$set": {"symbols": binance_symbols}}
-    )
-    await db.open_interest.insert_many([o.model_dump() for o in binance_open_interests])
+    async with get_db() as db:
+        await db.exchanges.update_one(
+            {"name": "binance"}, {"$set": {"symbols": binance_symbols}}
+        )
+        await db.open_interest.insert_many(
+            [o.model_dump() for o in binance_open_interests]
+        )
 
     await check_periods.kiq(binance_symbols)
 
@@ -72,8 +75,8 @@ async def send_open_interest_period_up(
         f"Изменение цены: +{abs(result.percent)}%"
     )
 
-    await send_s(sem, user.chat_id, message)
-    # print(message)
+    # await send_s(sem, user.chat_id, message)
+    print(message)
 
 
 async def send_open_interest_period_down(

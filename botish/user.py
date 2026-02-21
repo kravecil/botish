@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from botish.db.mongo import db
+from botish.db.mongo import get_db
 from botish.bot.texts import PERIODS
 
 
@@ -47,7 +47,8 @@ class User(BaseModel):
         filter = {"chat_id": chat_id}
         update = {"$set": {**user.model_dump()}}
 
-        await db.users.update_one(filter=filter, update=update, upsert=True)
+        async with get_db() as db:
+            await db.users.update_one(filter=filter, update=update, upsert=True)
 
         return user
 
@@ -58,21 +59,26 @@ class User(BaseModel):
 
     @staticmethod
     async def all() -> list[User]:
-        db_users = db.users.find()
+        async with get_db() as db:
+            db_users = db.users.find()
+            users = [User(**user) async for user in db_users]
 
-        return [User(**user) async for user in db_users]
+        return users
 
     @staticmethod
     async def get(chat_id: int) -> "User":
-        user_db = await db.users.find_one({"chat_id": chat_id})
+        async with get_db() as db:
+            user_db = await db.users.find_one({"chat_id": chat_id})
+            user = User(**user_db)
 
-        return User(**user_db)
+        return user
 
     async def update_settings(self, name: str, value: int | float) -> None:
-        await db.users.update_one(
-            filter={"chat_id": self.chat_id},
-            update={"$set": {name: value}},
-        )
+        async with get_db() as db:
+            await db.users.update_one(
+                filter={"chat_id": self.chat_id},
+                update={"$set": {name: value}},
+            )
 
     async def update_period_up(self, value: int) -> None:
         await self.update_settings("settings.open_interest.period_up", value)
@@ -88,6 +94,9 @@ class User(BaseModel):
 
     @staticmethod
     async def get_with_period(key: str, value: int) -> list[User]:
-        db_users = db.users.find({f"settings.open_interest.{key}": value})
+        async with get_db() as db:
+            db_users = db.users.find({f"settings.open_interest.{key}": value})
 
-        return [User(**u) async for u in db_users]
+            users = [User(**u) async for u in db_users]
+
+        return users

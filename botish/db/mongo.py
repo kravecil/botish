@@ -1,4 +1,8 @@
+# from typing import Generator, Any
+from contextlib import asynccontextmanager
+
 from pymongo import AsyncMongoClient
+
 from botish.settings import settings
 
 
@@ -7,6 +11,9 @@ class MongoDatabase:
 
     def __init__(self, db_dsn: str) -> None:
         self.client = AsyncMongoClient(db_dsn)
+
+    async def close(self) -> None:
+        await self.client.close()
 
     @property
     def db(self):
@@ -25,4 +32,10 @@ class MongoDatabase:
         return self.db["exchanges"]
 
 
-db = MongoDatabase(settings.db_dsn.encoded_string())
+@asynccontextmanager
+async def get_db():
+    db = MongoDatabase(settings.db_dsn.encoded_string())
+    try:
+        yield db
+    finally:
+        await db.close()
