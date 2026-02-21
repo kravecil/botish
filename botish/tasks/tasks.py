@@ -68,27 +68,31 @@ async def send_open_interest_period_up(
     sem: asyncio.Semaphore, user: User, symbol: str, result: CalcOpenInterestResult
 ) -> None:
     message = (
-        "📈📈📈\n"
-        f"Биржа Binance | {user.settings.open_interest.period_up_h} | {symbol}\n"
-        f"Открытый интерес вырос более чем на {user.settings.open_interest.percent_up}% "
-        f"({round(result.last_value, 1)} $)\n"
-        f"Изменение цены: +{abs(result.percent)}%"
+        f"📈Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_up_h}\n"
+        "-----------------------\n"
+        f"<b>Рост:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
+        f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
+        f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
     )
 
-    # await send_s(sem, user.chat_id, message)
-    print(message)
+    await send_s(sem, user.chat_id, message)
+    # print(message)
+
+    await asyncio.sleep(0.3)
 
 
 async def send_open_interest_period_down(
     sem: asyncio.Semaphore, user: User, symbol: str, result: CalcOpenInterestResult
 ) -> None:
     message = (
-        "📉📉📉\n"
-        f"Биржа Binance | {user.settings.open_interest.period_down_h} | {symbol}\n"
-        f"Открытый интерес просел более чем на {user.settings.open_interest.percent_down}% "
-        f"({round(result.last_value, 1)} $)\n"
-        f"Изменение цены: -{abs(result.percent)}%"
+        f"📈Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_down_h}\n"
+        "-----------------------\n"
+        f"<b>Просадка:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
+        f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
+        f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
     )
 
     await send_s(sem, user.chat_id, message)
     # print(message)
+
+    await asyncio.sleep(0.3)
