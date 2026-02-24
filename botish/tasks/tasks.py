@@ -1,12 +1,15 @@
 import asyncio
+from collections import defaultdict
 
 from botish.bot.bot import send_s
 from botish.bot.texts import PERIODS
-from botish.calc.open_interest import calc_open_interest, CalcOpenInterestResult
+from botish.calc.open_interest import CalcOpenInterestResult, calc_open_interest
 from botish.db.mongo import get_db
 from botish.finance.adapters.binance import BinanceAdapter
 from botish.tasks.broker import broker
 from botish.user import User
+
+type SendData = dict[int, list[str]]
 
 
 @broker.task(schedule=[{"interval": 60}])
@@ -18,81 +21,115 @@ async def gather_open_interest() -> None:
 
     async with get_db() as db:
         await db.exchanges.update_one(
-            {"name": "binance"}, {"$set": {"symbols": binance_symbols}}
+            {"name": "binance"}, {"$set": {"symbols": binance_symbols}}, upsert=True
         )
-        await db.open_interest.insert_many(
-            [o.model_dump() for o in binance_open_interests]
-        )
+        if binance_open_interests:
+            await db.open_interest.insert_many(
+                [o.model_dump() for o in binance_open_interests]
+            )
 
-    await check_periods.kiq(binance_symbols)
+    await check_periods.kiq()
 
 
 @broker.task
-async def check_periods(symbols: list[str]) -> None:
-    tasks_to_send = []
+async def check_periods() -> None:
+    send_data: SendData = defaultdict(list)
 
-    sem = asyncio.Semaphore(20)
+    async with get_db() as db:
+        db_symbols = await db.exchanges.find_one({"name": "binance"})
+        symbols = db_symbols["symbols"]
 
-    for period_value in PERIODS.values():
-        # TODO @me: переработать алгоритм с period_up_users/period_down_users
-        # Пользователей может быть много и тогда они будут дублироваться
-        period_up_users = await User.get_with_period("period_up", period_value)
-        period_down_users = await User.get_with_period("period_down", period_value)
+        for period_value in PERIODS.values():
+            # TODO @me: переработать алгоритм с period_up_users/period_down_users
+            # Пользователей может быть много и тогда они будут дублироваться
+            period_up_users = await User.get_with_period("period_up", period_value)
+            period_down_users = await User.get_with_period("period_down", period_value)
 
-        for symbol in symbols:
-            result = await calc_open_interest(symbol, period_value)
-            if not result:
-                continue
+            for symbol in symbols:
+                result = await calc_open_interest(db, symbol, period_value)
+                if not result:
+                    continue
 
-            for user_up in period_up_users:
-                if result.percent >= user_up.settings.open_interest.percent_up:
-                    tasks_to_send.append(
-                        send_open_interest_period_up(sem, user_up, symbol, result)
-                    )
+                for user_up in period_up_users:
+                    if result.percent >= user_up.settings.open_interest.percent_up:
+                        send_data[user_up.chat_id].append(
+                            get_open_interest_period_up_message(user_up, symbol, result)
+                        )
 
-            for user_down in period_down_users:
-                pass
-                if (
-                    result.percent < 0
-                    and abs(result.percent)
-                    >= user_down.settings.open_interest.percent_down
-                ):
-                    tasks_to_send.append(
-                        send_open_interest_period_down(sem, user_down, symbol, result)
-                    )
+                for user_down in period_down_users:
+                    if (
+                        result.percent < 0
+                        and abs(result.percent)
+                        >= user_down.settings.open_interest.percent_down
+                    ):
+                        send_data[user_down.chat_id].append(
+                            get_open_interest_period_down_message(
+                                user_down, symbol, result
+                            )
+                        )
 
-    await asyncio.gather(*tasks_to_send)
-
-
-async def send_open_interest_period_up(
-    sem: asyncio.Semaphore, user: User, symbol: str, result: CalcOpenInterestResult
-) -> None:
-    message = (
-        f"📈Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_up_h}\n"
-        "-----------------------\n"
-        f"<b>Рост:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
-        f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
-        f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
-    )
-
-    await send_s(sem, user.chat_id, message)
-    # print(message)
-
-    await asyncio.sleep(0.3)
+    if len(send_data):
+        await broadcast_to_users.kiq(send_data)
+        pass
 
 
-async def send_open_interest_period_down(
-    sem: asyncio.Semaphore, user: User, symbol: str, result: CalcOpenInterestResult
-) -> None:
-    message = (
-        f"📈Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_down_h}\n"
-        "-----------------------\n"
-        f"<b>Просадка:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
-        f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
-        f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
-    )
+def get_open_interest_period_up_message(
+    user: User, symbol: str, result: CalcOpenInterestResult
+) -> str:
+    # message = (
+    #     f"📈Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_up_h})\n"
+    #     "-----------------------\n"
+    #     f"<b>Рост:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
+    #     f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
+    #     f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
+    # )
+    message = f"📈<b>{symbol}</b> +{abs(result.percent)}% <i>{round(result.last_value / 1000000, 4)}млн $</i>"
 
-    await send_s(sem, user.chat_id, message)
-    # print(message)
+    return message
 
-    await asyncio.sleep(0.3)
+
+def get_open_interest_period_down_message(
+    user: User, symbol: str, result: CalcOpenInterestResult
+) -> str:
+    # message = (
+    #     f"📉Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_down_h})\n"
+    #     "-----------------------\n"
+    #     f"<b>Просадка:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
+    #     f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
+    #     f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
+    # )
+    message = f"📉<b>{symbol}</b> -{abs(result.percent)}% <i>{round(result.last_value / 1000000, 4)}млн $</i>"
+
+    return message
+
+
+@broker.task
+async def broadcast_to_users(data: SendData) -> None:
+    for chat_id, messages in data.items():
+        summarized_user_messages = summarize_user_message(messages)
+        for m in summarized_user_messages:
+            await send_s(chat_id, m)
+            await asyncio.sleep(1)
+
+
+def summarize_user_message(messages: list[str]) -> list[str]:
+    summarized_messages: list[str] = []
+
+    _message = ""
+    for message in messages:
+        if len(_message + f"\n{message}") > 4096:
+            summarized_messages.append(_message)
+            _message = ""
+        else:
+            _message += f"\n{message}"
+
+    if _message:
+        summarized_messages.append(_message)
+
+    return summarized_messages
+
+
+@broker.task(schedule=[{"interval": 360}])
+async def delete_old_open_interest() -> None:
+    # TODO @me
+    pass

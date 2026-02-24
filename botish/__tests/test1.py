@@ -1,10 +1,11 @@
 import asyncio
 
-from botish.tasks.tasks import check_periods
+from botish.tasks.tasks import check_periods, gather_open_interest
 
 
 async def main():
-    await check_periods(["BTCUSDT"])
+    # await gather_open_interest()
+    await check_periods()
     pass
 
 

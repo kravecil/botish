@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from botish.db.mongo import get_db
-
 
 @dataclass
 class CalcOpenInterestResult:
@@ -15,30 +13,27 @@ class CalcOpenInterestResult:
 
 
 async def calc_open_interest(
-    symbol: str, period_value: int
+    db, symbol: str, period_value: int
 ) -> CalcOpenInterestResult | None:
-    async with get_db() as db:
-        last_doc = await db.open_interest.find_one(
-            {"symbol": symbol}, sort=[("dt", -1)]
-        )
+    last_doc = await db.open_interest.find_one({"symbol": symbol}, sort=[("dt", -1)])
 
-        if not last_doc:
-            return None
+    if not last_doc:
+        return None
 
-        last_dt = last_doc["dt"]
-        delta_dt = last_dt - timedelta(minutes=period_value)
-        old_doc = await db.open_interest.find_one(
-            {"symbol": symbol, "dt": {"$lt": delta_dt}}, sort=[("dt", -1)]
-        )
+    last_dt = last_doc["dt"]
+    delta_dt = last_dt - timedelta(minutes=period_value)
+    old_doc = await db.open_interest.find_one(
+        {"symbol": symbol, "dt": {"$lt": delta_dt}}, sort=[("dt", -1)]
+    )
 
-        if not old_doc:
-            return None
+    if not old_doc:
+        return None
 
-        last_val = last_doc["value"]
-        old_val = old_doc["value"]
-        percent = round((last_val - old_val) / old_val * 100, 2)
+    last_val = last_doc["value"]
+    old_val = old_doc["value"]
+    percent = round((last_val - old_val) / old_val * 100, 2)
 
-        old_dt = old_doc["dt"]
+    old_dt = old_doc["dt"]
 
     return CalcOpenInterestResult(
         last_value=last_val,
