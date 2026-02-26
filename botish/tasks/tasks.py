@@ -20,6 +20,8 @@ async def gather_open_interest() -> None:
     binance_open_interests = await binance.get_open_interests(binance_symbols)
 
     async with get_db() as db:
+        await db.open_interest.create_index("symbol")
+
         await db.exchanges.update_one(
             {"name": "binance"}, {"$set": {"symbols": binance_symbols}}, upsert=True
         )
