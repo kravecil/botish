@@ -85,7 +85,7 @@ def get_open_interest_period_up_message(
     user: User, symbol: str, result: CalcOpenInterestResult
 ) -> str:
     value = round(result.last_value / 1000000, 4)
-    message = f"📈<b>{symbol}</b> +{abs(result.percent)}% <i>{value}млн$</i> ({result.old_value})"
+    message = f"📈<b>{symbol}</b> +{abs(result.percent)}% <i>{value}млн$</i>"
 
     return message
 
@@ -94,7 +94,7 @@ def get_open_interest_period_down_message(
     user: User, symbol: str, result: CalcOpenInterestResult
 ) -> str:
     value = round(result.last_value / 1000000, 4)
-    message = f"📉<b>{symbol}</b> -{abs(result.percent)}% <i>{value}млн$</i> ({result.old_value})"
+    message = f"📉<b>{symbol}</b> -{abs(result.percent)}% <i>{value}млн$</i>"
 
     return message
 
