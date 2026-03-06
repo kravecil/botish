@@ -22,9 +22,30 @@ async def calc_open_interest(
 
     last_dt = last_doc["dt"]
     delta_dt = last_dt - timedelta(minutes=period_value)
-    old_doc = await db.open_interest.find_one(
-        {"symbol": symbol, "dt": {"$lt": delta_dt}}, sort=[("dt", -1)]
+    # old_doc = await db.open_interest.find_one(
+    #     {"symbol": symbol, "dt": {"$lt": delta_dt}}, sort=[("dt", -1)]
+    # )
+
+    async_cursor = await db.open_interest.aggregate(
+        [
+            {
+                "$match": {
+                    "symbol": symbol,
+                    "$expr": {
+                        "$lte": [
+                            {"$dateTrunc": {"date": "$dt", "unit": "minute"}},
+                            {"$dateTrunc": {"date": delta_dt, "unit": "minute"}},
+                        ]
+                    },
+                }
+            },
+            {"$sort": {"dt": -1}},
+            {"$limit": 1},
+        ]
     )
+    old_doc_result = await async_cursor.to_list(1)
+
+    old_doc = old_doc_result[0] if old_doc_result else None
 
     if not old_doc:
         return None
