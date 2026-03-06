@@ -1,23 +1,27 @@
 import asyncio
+import logging
 from collections import defaultdict
 
 from botish.bot.bot import send_s
 from botish.bot.texts import PERIODS
-from botish.calc.open_interest import CalcOpenInterestResult, calc_open_interest
 from botish.db.mongo import get_db
 from botish.finance.adapters.binance import BinanceAdapter
-from botish.tasks.broker import broker
+from botish.scheduler.calc import CalcOpenInterestResult, calc_open_interest
 from botish.user import User
 
 type SendData = dict[int, list[str]]
 
 
-@broker.task(schedule=[{"interval": 60}])
 async def gather_open_interest() -> None:
+    logging.info("Выполняется сборка данных...")
+
     binance = BinanceAdapter()
 
     binance_symbols = await binance.get_all_symbols()
+    logging.info(f"- Загружено валют ({len(binance_symbols)})")
+
     binance_open_interests = await binance.get_open_interests(binance_symbols)
+    logging.info("- Данные загружены")
 
     async with get_db() as db:
         await db.open_interest.create_index("symbol")
@@ -30,11 +34,14 @@ async def gather_open_interest() -> None:
                 [o.model_dump() for o in binance_open_interests]
             )
 
-    await check_periods.kiq()
+    logging.info("- Данные записаны")
+
+    await check_periods()
 
 
-@broker.task
 async def check_periods() -> None:
+    logging.info("Выполняется проверка периодов...")
+
     send_data: SendData = defaultdict(list)
 
     async with get_db() as db:
@@ -71,21 +78,16 @@ async def check_periods() -> None:
                         )
 
     if len(send_data):
-        await broadcast_to_users.kiq(send_data)
-        pass
+        await broadcast_to_users(send_data)
 
 
 def get_open_interest_period_up_message(
     user: User, symbol: str, result: CalcOpenInterestResult
 ) -> str:
-    # message = (
-    #     f"📈Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_up_h})\n"
-    #     "-----------------------\n"
-    #     f"<b>Рост:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
-    #     f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
-    #     f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
-    # )
-    message = f"📈<b>{symbol}</b> +{abs(result.percent)}% <i>{round(result.last_value / 1000000, 4)}млн $</i>"
+    value = result.last_value  # round(result.last_value / 1000000, 4)
+    message = (
+        f"📈<b>{symbol}</b> +{abs(result.percent)}% <i>{value}</i> ({result.old_value})"
+    )
 
     return message
 
@@ -93,20 +95,16 @@ def get_open_interest_period_up_message(
 def get_open_interest_period_down_message(
     user: User, symbol: str, result: CalcOpenInterestResult
 ) -> str:
-    # message = (
-    #     f"📉Binance <b>{symbol}</b> (период: {user.settings.open_interest.period_down_h})\n"
-    #     "-----------------------\n"
-    #     f"<b>Просадка:</b> +{abs(result.percent)}% ({round(result.last_value / 1000000, 4)}млн $)\n"
-    #     f"Дата: {result.last_dt:%d.%m.%Y %H:%M:%S}\n"
-    #     f"<i>Прежнее значение: {round(result.old_value / 1000000, 4)}млн $ от {result.old_dt:%d.%m.%Y %H:%M:%S}</i>"
-    # )
-    message = f"📉<b>{symbol}</b> -{abs(result.percent)}% <i>{round(result.last_value / 1000000, 4)}млн $</i>"
+    value = result.last_value  # round(result.last_value / 1000000, 4)
+    message = (
+        f"📉<b>{symbol}</b> -{abs(result.percent)}% <i>{value}</i> ({result.old_value})"
+    )
 
     return message
 
 
-@broker.task
 async def broadcast_to_users(data: SendData) -> None:
+    logging.info("Выполняется широковещательная рассылка сообщений...")
     for chat_id, messages in data.items():
         summarized_user_messages = summarize_user_message(messages)
         for m in summarized_user_messages:
@@ -131,7 +129,6 @@ def summarize_user_message(messages: list[str]) -> list[str]:
     return summarized_messages
 
 
-@broker.task(schedule=[{"interval": 360}])
 async def delete_old_open_interest() -> None:
     # TODO @me
     pass

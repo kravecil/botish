@@ -1,6 +1,6 @@
 [project]
 name = "botish"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = [
     {name = "KravecIV",email = "kravesil@gmail.com"}
@@ -11,8 +11,6 @@ dependencies = [
     "aiogram (>=3.24.0,<4.0.0)",
     "pydantic-settings (>=2.12.0,<3.0.0)",
     "pymongo (>=4.16.0,<5.0.0)",
-    "taskiq (>=0.12.1,<0.13.0)",
-    "taskiq-redis (>=1.2.2,<2.0.0)",
 ]
 
 

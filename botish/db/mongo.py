@@ -9,7 +9,14 @@ from botish.settings import settings
 class MongoDatabase:
     client: AsyncMongoClient
 
-    def __init__(self, db_dsn: str) -> None:
+    def __init__(self) -> None:
+        usr = settings.db_username
+        pwd = settings.db_password
+        host = settings.db_host
+        port = settings.db_port
+        name = settings.db_name
+
+        db_dsn = f"mongodb://{usr}:{pwd}@{host}:{port}/{name}?authSource=admin"
         self.client = AsyncMongoClient(db_dsn)
 
     async def close(self) -> None:
@@ -34,7 +41,7 @@ class MongoDatabase:
 
 @asynccontextmanager
 async def get_db():
-    db = MongoDatabase(settings.db_dsn.encoded_string())
+    db = MongoDatabase()
     try:
         yield db
     finally:

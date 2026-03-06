@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import SecretStr, Field, MongoDsn, RedisDsn
+from pydantic import SecretStr, Field
 from dotenv import find_dotenv
 
 
@@ -12,9 +12,12 @@ class Settings(BaseSettings):
 
     telegram_bot_token: SecretStr = Field(default=...)
     binance_api_token: SecretStr = Field(default=...)
-    db_dsn: MongoDsn = Field(default=...)
+
+    db_host: str = Field(default=...)
+    db_port: str = Field(default=...)
+    db_username: str = Field(default=...)
+    db_password: str = Field(default=...)
     db_name: str = Field(default=...)
-    redis_dsn: RedisDsn = Field(default=...)
 
 
 settings = Settings()
