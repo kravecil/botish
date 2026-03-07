@@ -60,6 +60,12 @@ async def check_periods() -> None:
             period_up_users = await User.get_with_period("period_up", period_value)
             period_down_users = await User.get_with_period("period_down", period_value)
 
+            if not period_up_users and not period_down_users:
+                logging.info(f"- Пропуск периода [{period_value}]")
+                continue
+
+            logging.info(f"- Расчёт периода [{period_value}] ...")
+
             for symbol in symbols:
                 result = await calc_open_interest(db, symbol, period_value)
                 if not result:
