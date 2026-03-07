@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from collections import defaultdict
+from pymongo import DESCENDING
 
 from botish.bot.bot import send_s
 from botish.bot.texts import PERIODS
@@ -10,6 +11,8 @@ from botish.scheduler.calc import CalcOpenInterestResult, calc_open_interest
 from botish.user import User
 
 type SendData = dict[int, list[str]]
+
+INDEX_EXPIRE_SECONDS = 86400 + 300
 
 
 async def gather_open_interest() -> None:
@@ -25,6 +28,9 @@ async def gather_open_interest() -> None:
 
     async with get_db() as db:
         await db.open_interest.create_index("symbol")
+        await db.open_interest.create_index(
+            [("dt", DESCENDING)], expireAfterSeconds=INDEX_EXPIRE_SECONDS
+        )
 
         await db.exchanges.update_one(
             {"name": "binance"}, {"$set": {"symbols": binance_symbols}}, upsert=True
