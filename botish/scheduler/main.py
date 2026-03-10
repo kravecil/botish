@@ -9,7 +9,12 @@ TICK_TIME = 60  # seconds
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    logging.basicConfig(
+        level=logging.INFO,
+        stream=sys.stdout,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
     while True:
         logging.info("Начинается обработка:")
@@ -20,7 +25,9 @@ async def main():
         exec_time = time.perf_counter() - start_time
         time_to_wait = max(0, TICK_TIME - exec_time)
 
-        logging.info(f"Обработка завершена! Пауза {round(time_to_wait, 1)} секунд...")
+        logging.info(
+            f"Обработка завершена за {round(exec_time, 1)} сек! Пауза {round(time_to_wait, 1)} сек..."
+        )
         await asyncio.sleep(time_to_wait)
 
 
