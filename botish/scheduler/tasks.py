@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 
+from babel.numbers import format_number
 from pymongo import DESCENDING
 
 from botish.bot.bot import bot
@@ -14,6 +15,15 @@ from botish.user import User
 type SendData = dict[int, list[str]]
 
 INDEX_EXPIRE_SECONDS = 86400 + 300
+
+MSG_TEMPLATE = (
+    "<b>{exchange_name}</b>\n"
+    "---------------------------------\n"
+    "{emj_state}<b>{symbol} | {value}💰 | {state}{percent}%</b>\n"
+    "\n"
+    "<i>Прежнее: {old_value} от {old_dt}</i>\n"
+    "<i>Настройки: период: {user_period} / процент: {user_percent}</i>\n"
+)
 
 
 async def gather_open_interest() -> None:
@@ -97,8 +107,22 @@ async def check_periods() -> None:
 def get_open_interest_period_up_message(
     user: User, symbol: str, result: CalcOpenInterestResult
 ) -> str:
-    value = round(result.last_value / 1000000, 4)
-    message = f"📈<b>{symbol}</b> +{abs(result.percent)}% <i>{value}млн$</i>"
+    value = format_number(result.last_value, locale="ru_RU")
+    percent = abs(result.percent)
+
+    # message = f"📈<b>{symbol}</b> +{abs(result.percent)}% <i>{value}млн$</i>"
+    message = MSG_TEMPLATE.format(
+        exchange_name="Binance",
+        emj_state="📈",
+        symbol=symbol,
+        state="+",
+        percent=percent,
+        value=value,
+        old_value=format_number(result.old_value, locale="ru_RU"),
+        old_dt=f"{result.old_dt:%d.%m.%Y %H:%M}",
+        user_period=user.settings.open_interest.period_up_h,
+        user_percent=user.settings.open_interest.percent_up,
+    )
 
     return message
 
@@ -106,8 +130,22 @@ def get_open_interest_period_up_message(
 def get_open_interest_period_down_message(
     user: User, symbol: str, result: CalcOpenInterestResult
 ) -> str:
-    value = round(result.last_value / 1000000, 4)
-    message = f"📉<b>{symbol}</b> -{abs(result.percent)}% <i>{value}млн$</i>"
+    value = format_number(result.last_value, locale="ru_RU")
+    percent = abs(result.percent)
+
+    # message = f"📉<b>{symbol}</b> -{abs(result.percent)}% <i>{value}млн$</i>"
+    message = MSG_TEMPLATE.format(
+        exchange_name="Binance",
+        emj_state="📉",
+        symbol=symbol,
+        state="-",
+        percent=percent,
+        value=value,
+        old_value=format_number(result.old_value, locale="ru_RU"),
+        old_dt=f"{result.old_dt:%d.%m.%Y %H:%M}",
+        user_period=user.settings.open_interest.period_down_h,
+        user_percent=user.settings.open_interest.percent_down,
+    )
 
     return message
 
