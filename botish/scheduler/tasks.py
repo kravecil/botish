@@ -1,9 +1,10 @@
-import asyncio
 import logging
 from collections import defaultdict
+
 from pymongo import DESCENDING
 
-from botish.bot.bot import send_s
+from botish.bot.bot import bot
+from botish.bot.limiter import TelegramBotLimiter
 from botish.bot.texts import PERIODS
 from botish.db.mongo import get_db
 from botish.finance.adapters.binance import BinanceAdapter
@@ -113,11 +114,12 @@ def get_open_interest_period_down_message(
 
 async def broadcast_to_users(data: SendData) -> None:
     logging.info("Выполняется широковещательная рассылка сообщений...")
+
+    limiter = TelegramBotLimiter()
+
     for chat_id, messages in data.items():
-        summarized_user_messages = summarize_user_message(messages)
-        for m in summarized_user_messages:
-            await send_s(chat_id, m)
-            await asyncio.sleep(1)
+        for message in messages:
+            await limiter.send_message(bot, chat_id, message)
 
 
 def summarize_user_message(messages: list[str]) -> list[str]:
