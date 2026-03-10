@@ -19,7 +19,7 @@ INDEX_EXPIRE_SECONDS = 86400 + 300
 MSG_TEMPLATE = (
     "<b>{exchange_name}</b>\n"
     "---------------------------------\n"
-    "{emj_state}<b>{symbol} | {value}💰 | {state}{percent}%</b>\n"
+    "{emj_state}<b><code>{symbol}</code> | {value}💰 | {state}{percent}%</b>\n"
     "\n"
     "<i>Прежнее: {old_value} от {old_dt}</i>\n"
     "<i>Настройки: период: {user_period} / процент: {user_percent}</i>\n"

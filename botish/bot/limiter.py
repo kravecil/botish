@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from aiogram import Bot
+    from aiogram.types import ReplyMarkupUnion
 
 
 class TelegramBotLimiter:
@@ -44,7 +45,13 @@ class TelegramBotLimiter:
             # Если лимит достигнут, ждём 1 секунду и проверяем снова
             await asyncio.sleep(1)
 
-    async def send_message(self, bot: "Bot", chat_id: int, text: str):
+    async def send_message(
+        self,
+        bot: "Bot",
+        chat_id: int,
+        text: str,
+        reply_markup: ReplyMarkupUnion | None = None,
+    ):
         """
         Гарантированно отправляет сообщение, ожидая освобождения лимитов.
         Блокирует выполнение до тех пор, пока сообщение не будет отправлено.
@@ -59,7 +66,9 @@ class TelegramBotLimiter:
 
         try:
             # Отправляем сообщение
-            await bot.send_message(chat_id=chat_id, text=text)
+            await bot.send_message(
+                chat_id=chat_id, text=text, reply_markup=reply_markup
+            )
             # print(f"Сообщение успешно отправлено пользователю {chat_id}")
         except Exception as e:
             print(f"Ошибка отправки сообщения пользователю {chat_id}: {e}")

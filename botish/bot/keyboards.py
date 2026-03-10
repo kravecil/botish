@@ -77,3 +77,13 @@ def period_down_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=buttons,
     )
+
+
+def notification_kb(symbol: str) -> InlineKeyboardMarkup:
+    buttons = [
+        [InlineKeyboardButton(text="Скопировать имя монеты", url=f"copy://{symbol}")],
+    ]
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=buttons,
+    )
