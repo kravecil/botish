@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from collections import defaultdict
 
@@ -155,9 +156,13 @@ async def broadcast_to_users(data: SendData) -> None:
 
     limiter = TelegramBotLimiter()
 
+    tasks = []
+
     for chat_id, messages in data.items():
         for message in messages:
-            await limiter.send_message(bot, chat_id, message)
+            tasks.append(limiter.send_message(bot, chat_id, message))
+
+    await asyncio.gather(*tasks)
 
 
 def summarize_user_message(messages: list[str]) -> list[str]:
